@@ -1,0 +1,6 @@
+id=voenabler-vn-p3
+name=HXN VoEnabler VN — All Qualcomm Pixels (< Pixel 6) VoLTE
+version=v3.1.0
+versionCode=310
+author=hxn-labs (imsforge core by okhsunrog)
+description=Enables VN Carriers (Viettel/VinaPhone/MobiFone/Vietnamobile) VoLTE on all Qualcomm Google Pixels before Pixel 6 (Pixel 1 to Pixel 5a 5G, Android 10-15). Patches CarrierSettings + ICCID XML cache, overlays Google-signed ROW MBN over WildCard, and binds org.codeaurora.ims.

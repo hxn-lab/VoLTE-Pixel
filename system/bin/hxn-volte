@@ -1,0 +1,282 @@
+#!/system/bin/sh
+# ============================================================
+# HXN VoEnabler VN v3.0.0 — Master CLI Interface
+# bin/hxn-volte
+# Author: hxn-labs
+# Policy: STRICT LIVE TERMINAL OUTPUT ONLY — ZERO DISK REPORTS
+# ============================================================
+
+# Tự động xác định đường dẫn thư mục gốc của module
+SCRIPT_PATH="$0"
+case "$SCRIPT_PATH" in
+  /*) MODDIR="${SCRIPT_PATH%/*}" ;;
+  *) MODDIR=$(cd "${SCRIPT_PATH%/*}" 2>/dev/null && pwd) ;;
+esac
+
+if [ ! -f "$MODDIR/tools/shell-utils.sh" ]; then
+  if [ -f "/data/adb/modules/voenabler-vn-p3/tools/shell-utils.sh" ]; then
+    MODDIR="/data/adb/modules/voenabler-vn-p3"
+  elif [ -f "/data/adb/modules_update/voenabler-vn-p3/tools/shell-utils.sh" ]; then
+    MODDIR="/data/adb/modules_update/voenabler-vn-p3"
+  elif [ -f "$(dirname "$MODDIR")/tools/shell-utils.sh" ]; then
+    MODDIR="$(dirname "$MODDIR")"
+  else
+    echo "Error: HXN VoEnabler module directory not found." >&2
+    exit 1
+  fi
+fi
+
+# Nạp các thành phần Engine & Tools
+. "$MODDIR/tools/shell-utils.sh"
+. "$MODDIR/tools/android-compat.sh"
+. "$MODDIR/tools/evidence.sh"
+. "$MODDIR/tools/selftest.sh"
+. "$MODDIR/engine/device.sh"
+. "$MODDIR/engine/carrier.sh"
+. "$MODDIR/engine/network.sh"
+. "$MODDIR/engine/ims.sh"
+. "$MODDIR/engine/pdn.sh"
+. "$MODDIR/engine/timeline.sh"
+. "$MODDIR/engine/diagnose.sh"
+. "$MODDIR/engine/enable.sh"
+. "$MODDIR/engine/rollback.sh"
+. "$MODDIR/engine/mbn.sh"
+. "$MODDIR/engine/banking.sh"
+
+cmd_scan() {
+  ui_banner
+  inspect_device_tier
+  inspect_carrier_tier
+  inspect_network_tier
+  inspect_ims_tier
+  inspect_pdn_tier
+  run_root_cause_analysis
+  inspect_mbn_tier
+
+  ui_header "FINAL FORENSICS VERDICT"
+  local IMS_REG MMTEL_VOICE
+  IMS_REG=$(evidence_get_status "IMS_REG_STATE")
+  MMTEL_VOICE=$(evidence_get_status "IMS_MMTEL_VOICE")
+
+  if [ "$IMS_REG" = "VERIFIED" ] && [ "$MMTEL_VOICE" = "VERIFIED" ]; then
+    ui_status "VERDICT" "IMS Registered & MMTEL Active (Live test call recommended)" "VERIFIED"
+  else
+    ui_status "VERDICT" "IMS Not Registered — Run 'hxn-volte plan' to review solution" "FAIL"
+  fi
+  echo ""
+}
+
+cmd_diagnose() {
+  ui_banner
+  inspect_device_tier
+  inspect_carrier_tier
+  inspect_network_tier
+  inspect_ims_tier
+  inspect_pdn_tier
+  run_root_cause_analysis
+  echo ""
+}
+
+cmd_timeline() {
+  ui_banner
+  run_ims_timeline
+  echo ""
+}
+
+cmd_ims() {
+  ui_banner
+  inspect_ims_tier
+  echo ""
+}
+
+cmd_pdn() {
+  ui_banner
+  inspect_pdn_tier
+  echo ""
+}
+
+cmd_carrier() {
+  ui_banner
+  inspect_carrier_tier
+  echo ""
+}
+
+cmd_mbn() {
+  ui_banner
+  inspect_mbn_tier
+  echo ""
+}
+
+cmd_fdr() {
+  ui_banner
+  trigger_modem_fdr_refresh
+  echo ""
+}
+
+cmd_plan() {
+  ui_banner
+  show_enablement_plan_and_execute "plan"
+  echo ""
+}
+
+cmd_enable() {
+  ui_banner
+  show_enablement_plan_and_execute "enable"
+  echo ""
+}
+
+cmd_verify() {
+  ui_banner
+  ui_header "LIVE IMS & VoLTE VERIFICATION"
+  inspect_ims_tier
+  inspect_pdn_tier
+  run_ims_timeline
+  echo ""
+}
+
+cmd_rollback() {
+  ui_banner
+  run_true_rollback
+  echo ""
+}
+
+cmd_banking() {
+  ui_banner
+  inspect_banking_security
+  echo ""
+}
+
+cmd_selftest() {
+  ui_banner
+  run_self_test_suite
+  echo ""
+}
+
+show_interactive_menu() {
+  ui_banner
+  echo "  Select an action:"
+  echo ""
+  echo "    ${C_BOLD} 1)${C_RESET} ${C_CYAN}SCAN${C_RESET}     — Full 5-Layer Forensics & Qualcomm MBN Inventory"
+  echo "    ${C_BOLD} 2)${C_RESET} ${C_MAGENTA}DIAGNOSE${C_RESET} — Root Cause Intelligence 2.0 (16 Standard Codes)"
+  echo "    ${C_BOLD} 3)${C_RESET} ${C_BLUE}TIMELINE${C_RESET} — IMS Registration 10-Stage Lifecycle Timeline"
+  echo "    ${C_BOLD} 4)${C_RESET} ${C_YELLOW}IMS${C_RESET}      — Deep Forensics: Bound ImsService, SIP & MMTEL Voice"
+  echo "    ${C_BOLD} 5)${C_RESET} ${C_GREEN}PDN${C_RESET}      — Deep Forensics: IMS APN, Bearer PDN & P-CSCF Discovery"
+  echo "    ${C_BOLD} 6)${C_RESET} ${C_CYAN}CARRIER${C_RESET}  — SIM Hardware, Viettel PLMN 45204 & USIM/ISIM Check"
+  echo "    ${C_BOLD} 7)${C_RESET} ${C_BLUE}MBN${C_RESET}      — Qualcomm MBN Forensics 2.0 & Snapdragon 845 Donors"
+  echo "    ${C_BOLD} 8)${C_RESET} ${C_MAGENTA}PLAN${C_RESET}     — Review Adaptive Enablement Plan (Read-Only)"
+  echo "    ${C_BOLD} 9)${C_RESET} ${C_GREEN}ENABLE${C_RESET}   — Execute Adaptive Enablement (with Schema 2.0 Backup)"
+  echo "    ${C_BOLD}10)${C_RESET} ${C_BOLD}VERIFY${C_RESET}   — Live Verification of Post-Activation Telemetry"
+  echo "    ${C_BOLD}11)${C_RESET} ${C_RED}ROLLBACK${C_RESET} — Exact-State Schema 2.0 Idempotent Rollback"
+  echo "    ${C_BOLD}12)${C_RESET} ${C_GRAY}BANKING${C_RESET}  — Security, Bootloader, VerifiedBoot & SELinux Check"
+  echo "    ${C_BOLD}13)${C_RESET} ${C_YELLOW}SELFTEST${C_RESET} — Automated 14-Suite Self-Test Engine"
+  echo "    ${C_BOLD} 0)${C_RESET} Exit"
+  echo ""
+  printf "  ${C_BOLD}Enter choice [0-13]: ${C_RESET}"
+  read -r CHOICE
+  echo ""
+
+  case "$CHOICE" in
+    1) cmd_scan ;;
+    2) cmd_diagnose ;;
+    3) cmd_timeline ;;
+    4) cmd_ims ;;
+    5) cmd_pdn ;;
+    6) cmd_carrier ;;
+    7) cmd_mbn ;;
+    8) cmd_plan ;;
+    9) cmd_enable ;;
+    10) cmd_verify ;;
+    11) cmd_rollback ;;
+    12) cmd_banking ;;
+    13) cmd_selftest ;;
+    0) exit 0 ;;
+    *)
+      ui_error "Invalid selection."
+      exit 1
+      ;;
+  esac
+}
+
+# Xử lý tham số dòng lệnh CLI độc lập
+case "$1" in
+  scan|SCAN)
+    cmd_scan
+    ;;
+  diagnose|DIAGNOSE)
+    cmd_diagnose
+    ;;
+  timeline|TIMELINE)
+    cmd_timeline
+    ;;
+  ims|IMS)
+    cmd_ims
+    ;;
+  pdn|PDN)
+    cmd_pdn
+    ;;
+  carrier|CARRIER)
+    cmd_carrier
+    ;;
+  mbn|MBN)
+    cmd_mbn
+    ;;
+  fdr|FDR|mbn-reset)
+    cmd_fdr
+    ;;
+  plan|PLAN)
+    cmd_plan
+    ;;
+  enable|ENABLE)
+    cmd_enable
+    ;;
+  verify|VERIFY)
+    cmd_verify
+    ;;
+  rollback|ROLLBACK)
+    cmd_rollback
+    ;;
+  banking|BANKING)
+    cmd_banking
+    ;;
+  selftest|SELFTEST|test|TEST)
+    cmd_selftest
+    ;;
+  help|--help|-h)
+    ui_banner
+    echo "Usage: hxn-volte [COMMAND]"
+    echo ""
+    echo "Core Forensic & Diagnostic Commands:"
+    echo "  scan       Run full live diagnostics across all 5 tiers & MBN"
+    echo "  diagnose   Run Root Cause Intelligence 2.0 (16 standard codes)"
+    echo "  timeline   Track 10-stage IMS registration lifecycle timeline"
+    echo "  ims        Inspect bound ImsService, SIP registration & MMTEL voice"
+    echo "  pdn        Inspect IMS APN, Bearer DataConnection & P-CSCF discovery"
+    echo "  carrier    Inspect SIM card, Viettel PLMN 45204 & USIM/ISIM status"
+    echo "  mbn        Inspect Qualcomm MBN architecture & SDM845 donor research"
+    echo "  fdr        Refresh Qualcomm modem cache (trigger MBN re-indexing)"
+    echo ""
+    echo "Adaptive Enablement & Safe Recovery Commands:"
+    echo "  plan       Display adaptive enablement plan without modifying system"
+    echo "  enable     Execute adaptive enablement with Schema 2.0 backup"
+    echo "  verify     Perform live verification of post-activation state"
+    echo "  rollback   Exact-state idempotent rollback using Schema 2.0 snapshot"
+    echo ""
+    echo "Security & Integrity Testing Commands:"
+    echo "  banking    Check root, bootloader, verified boot & SELinux integrity"
+    echo "  selftest   Run automated 14-suite self-test engine with mock fixtures"
+    echo "  help       Display this technical help guide"
+    echo ""
+    echo "Exit Codes: 0 = Success | 1 = Failure/Error | 2 = Unsupported Hardware"
+    echo ""
+    ;;
+  --menu|menu)
+    show_interactive_menu
+    ;;
+  *)
+    if [ -t 0 ]; then
+      show_interactive_menu
+    else
+      cmd_scan
+    fi
+    ;;
+esac

@@ -1,0 +1,21 @@
+# ============================================================
+# HXN VoEnabler VN v2.7.1 — Qualcomm Radio Telephony Overrides
+# Target: Google Pixel 3 (blueline) | Viettel (45204)
+# ============================================================
+persist.dbg.ims_volte_enable=1
+persist.dbg.volte_avail_ovr=1
+persist.dbg.vt_avail_ovr=1
+persist.dbg.wfc_avail_ovr=1
+persist.radio.rat_on=combine
+persist.radio.data_ltd_sys_ind=1
+persist.radio.data_con_rprt=1
+persist.radio.calls.on.ims=1
+persist.vendor.radio.volte_switch=1
+persist.vendor.radio.add_ims_apn=1
+persist.vendor.radio.force_ims_apn=1
+persist.vendor.radio.calls.on.ims=1
+persist.vendor.radio.supp_serv_route=ims
+persist.vendor.radio.carrier_override=1
+persist.vendor.radio.custom_ecc=1
+persist.vendor.radio.data_con_rprt=1
+persist.vendor.radio.relay_oprt_change=1

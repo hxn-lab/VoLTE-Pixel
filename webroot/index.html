@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>imsforge</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="title"><h1>imsforge</h1><span class="version" id="version"></span></div>
+  <button class="icon" id="refresh" aria-label="Refresh status">↻</button>
+</header>
+<main>
+  <section class="health idle" id="health" aria-live="polite">
+    <span class="health-symbol" id="health-symbol" aria-hidden="true">…</span>
+    <div><h2 id="health-title">Checking module</h2><p id="health-note">Reading the current boot and saved settings.</p></div>
+  </section>
+  <div class="banner" id="banner" hidden role="status"><span id="banner-text"></span><button class="small" id="banner-action"></button></div>
+  <section aria-labelledby="sims-title"><h2 class="section-title" id="sims-title">Your SIM cards</h2><div class="sim-list" id="sims"><p class="hint">Reading SIM cards…</p></div></section>
+  <details class="module-details" id="module-details">
+    <summary><span id="module-summary">Module diagnostics</span></summary>
+    <div class="rows" id="status-rows"></div>
+    <p class="hint" id="config-note" hidden></p>
+    <p class="error" id="diagnostic-errors" hidden></p>
+    <p class="hint" id="checked-at"></p>
+    <details><summary>Last boot log</summary><pre id="log">—</pre></details>
+  </details>
+  <details class="advanced" id="raw-details">
+    <summary>Advanced configuration</summary>
+    <p class="hint">Edit automatic detection and per-carrier overrides as JSON. Changes apply after saving and restarting.</p>
+    <label class="sr-only" for="raw">Configuration JSON</label>
+    <textarea id="raw" spellcheck="false" rows="12" aria-describedby="raw-error"></textarea>
+    <div class="row-actions"><button class="small" id="raw-format">Format JSON</button></div>
+  </details>
+  <p class="error" id="raw-error" role="alert"></p>
+</main>
+<footer id="action-bar" hidden>
+  <p id="action-note" aria-live="polite"></p>
+  <div class="footer-actions"><button class="ghost" id="discard">Discard</button><button class="primary" id="save">Save changes</button><button class="primary" id="reboot">Restart to apply</button></div>
+</footer>
+<div class="toast" id="toast" hidden role="status"></div>
+<script src="app.js"></script>
+</body>
+</html>
