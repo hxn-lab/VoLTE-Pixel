@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # ============================================================
-# HXN VoEnabler VN v3.0.0 — Adaptive Enablement Engine
+# HXN VoEnabler VN v3.2.0 — Adaptive Enablement Engine
 # engine/enable.sh
 # Author: hxn-labs
 # Policy: Evidence-Driven Adaptive Enablement & Schema 2.1 Backup
@@ -198,6 +198,7 @@ SNAPEOF
         --stock-cache "/data/adb/imsforge/stock" --status "/data/adb/imsforge/status.json" \
         --phone-files "/data/user_de/0/com.android.phone/files" >/dev/null 2>&1 || true
     fi
+    apply_userdebug_cc_overrides
     if patch_iccid_xml_caches_inplace; then
       ui_status "CARRIER CONFIG" "Patched active ICCID XML cache in-place (<bundle_data>)" "PASS"
     else
@@ -265,10 +266,12 @@ SNAPEOF
     fi
   fi
 
-  ui_info "Binding Qualcomm IMS service (org.codeaurora.ims) on slot 0..."
+  local IMS_SVC="org.codeaurora.ims"
+  [ -f "$MODDIR/tools/carrierconfig-patcher.sh" ] && IMS_SVC=$(detect_vendor_ims_package 0)
+  ui_info "Binding IMS service (${IMS_SVC}) on slot 0..."
   if command -v cmd >/dev/null 2>&1; then
-    cmd phone ims set-ims-service -s 0 -c org.codeaurora.ims >/dev/null 2>&1 || true
-    cmd phone ims set-ims-service -s 0 -d org.codeaurora.ims >/dev/null 2>&1 || true
+    cmd phone ims set-ims-service -s 0 -c "$IMS_SVC" >/dev/null 2>&1 || true
+    cmd phone ims set-ims-service -s 0 -d "$IMS_SVC" >/dev/null 2>&1 || true
     cmd phone ims enable -s 0 >/dev/null 2>&1 || true
   fi
   sleep 4

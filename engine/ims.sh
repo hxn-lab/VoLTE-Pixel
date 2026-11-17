@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # ============================================================
-# HXN VoEnabler VN v3.0.0 — Layer D & F: IMS & SIP Forensics
+# HXN VoEnabler VN v3.2.0 — Layer D & F: IMS & SIP Forensics
 # engine/ims.sh
 # Author: hxn-labs
 # Policy: Multi-Layer Telemetry, Zero False Positive, Strict Disambiguation
@@ -23,7 +23,7 @@ evaluate_ims_layer() {
   fi
 
   if [ "$IMS_BOUND" = "false" ] && [ -n "$DUMP_DEBUG" ]; then
-    if echo "$DUMP_DEBUG" | grep -qE "org\.codeaurora\.ims.*(Bound|CONNECTED|mBound=true)|mBoundImsServices.*org\.codeaurora\.ims|ImsPhoneCallTracker"; then
+    if echo "$DUMP_DEBUG" | grep -qE "(org\.codeaurora\.ims|com\.qualcomm\.qti\.ims|com\.google\.android\.ims).*(Bound|CONNECTED|mBound=true)|mBoundImsServices.*(org\.codeaurora\.ims|com\.qualcomm\.qti\.ims)|ImsPhoneCallTracker"; then
       local PID_IMS=""
       if command -v pidof >/dev/null 2>&1; then
         PID_IMS=$(pidof org.codeaurora.ims 2>/dev/null || echo "")

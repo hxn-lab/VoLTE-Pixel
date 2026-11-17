@@ -193,3 +193,55 @@ apply_pixel_qcom_mbn_overlay() {
   fi
   return 0
 }
+
+# 6. Auto-detect vendor/ROM ImsService package (works on Stock + LineageOS/crDroid/PixelOS)
+detect_vendor_ims_package() {
+  local slot="${1:-0}"
+  local pkg=""
+  if command -v cmd >/dev/null 2>&1; then
+    pkg=$(cmd phone ims get-ims-service -s "$slot" -d 2>/dev/null | tr -d '\r\n ' || echo "")
+    case "$pkg" in
+      *.*.*)
+        printf "%s" "$pkg"
+        return 0
+        ;;
+    esac
+  fi
+  if command -v pm >/dev/null 2>&1; then
+    local pkgs
+    pkgs=$(pm list packages 2>/dev/null)
+    for cand in org.codeaurora.ims com.qualcomm.qti.ims com.google.android.ims; do
+      if printf "%s\n" "$pkgs" | grep -q "package:${cand}$"; then
+        printf "%s" "$cand"
+        return 0
+      fi
+    done
+  fi
+  printf "%s" "org.codeaurora.ims"
+  return 0
+}
+
+# 7. On userdebug/eng Custom ROMs (LineageOS, crDroid, EvolutionX...), TelephonyUtils.IS_USER is false,
+#    so `cmd phone cc set-value` works directly via CarrierConfigLoader API even on Android 15/16!
+apply_userdebug_cc_overrides() {
+  local build_type
+  build_type=$(getprop ro.build.type 2>/dev/null || echo "user")
+  [ "$build_type" = "user" ] && return 0
+  command -v cmd >/dev/null 2>&1 || return 0
+
+  for slot in 0 1; do
+    cmd phone cc set-value -p "$slot" carrier_volte_available_bool true >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" carrier_vt_available_bool true >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" editable_enhanced_4g_lte_bool true >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" enhanced_4g_lte_on_by_default_bool true >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" hide_enhanced_4g_lte_bool false >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" carrier_volte_provisioning_required_bool false >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" carrier_volte_provisioned_bool true >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" carrier_ims_gba_required_bool false >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" show_ims_registration_status_bool true >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" carrier_wfc_ims_available_bool true >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" editable_wfc_mode_bool true >/dev/null 2>&1 || true
+    cmd phone cc set-value -p "$slot" carrier_default_wfc_ims_enabled_bool true >/dev/null 2>&1 || true
+  done
+  return 0
+}

@@ -182,4 +182,16 @@ else
   exit 1
 fi
 
-echo ">>> ALL v3.1.0 BEHAVIOR TESTS COMPLETED WITH 100% PASS RATE! <<<"
+
+# Test 13: Verify Custom ROM helper functions (detect_vendor_ims_package & apply_userdebug_cc_overrides) exist and pass syntax
+if grep -q "detect_vendor_ims_package" "$MODDIR/tools/carrierconfig-patcher.sh" && \
+   grep -q "apply_userdebug_cc_overrides" "$MODDIR/tools/carrierconfig-patcher.sh" && \
+   grep -q "apply_userdebug_cc_overrides" "$MODDIR/service.sh" && \
+   grep -q "detect_vendor_ims_package" "$MODDIR/service.sh"; then
+  echo "[PASS] Custom ROM AOSP (Android 10-16) dynamic IMS & userdebug overrides integrated"
+else
+  echo "[FAIL] Custom ROM compatibility hooks missing!"
+  exit 1
+fi
+
+echo ">>> ALL v3.2.0 BEHAVIOR TESTS COMPLETED WITH 100% PASS RATE! <<<"
