@@ -23,7 +23,7 @@ evaluate_network_layer() {
 
   # 1. Trạng thái nguồn Radio (Radio Power State)
   local RADIO_OFF="false"
-  if echo "$DUMP_TEL" | grep -qiE "mRadioPower=false|mRadioState=0\b|isRadioOn=false|RADIO_POWER_OFF"; then
+  if echo "$DUMP_TEL" | grep -qiE "mRadioPower=false|mRadioState=0([^0-9]|$)|isRadioOn=false|RADIO_POWER_OFF"; then
     RADIO_OFF="true"
   fi
 
@@ -78,9 +78,9 @@ evaluate_network_layer() {
   # 5. VoPS Support (Voice over PS Session in S1 mode)
   local VOPS
   VOPS=$(echo "$DUMP_TEL" | grep -m1 -iE "mVopsSupport|vops" | sed -E 's/.*(mVopsSupport|vops)[ =]+([0-9a-zA-Z_]+).*/\2/' || echo "")
-  if [ -n "$VOPS" ] && [ "$VOPS" != "0" ] && [ "$VOPS" != "false" ]; then
-    evidence_set "NET_VOPS" "Supported (${VOPS})" "dumpsys telephony.registry (LteVopsSupportInfo)" "HIGH" "PASS" "eNodeB SIB2 indicates network supports PS voice"
-  elif [ "$VOPS" = "0" ] || [ "$VOPS" = "false" ]; then
+  if [ "$VOPS" = "3" ] || [ "$VOPS" = "0" ] || [ "$VOPS" = "false" ]; then
+    evidence_set "NET_VOPS" "Not Supported (vops=${VOPS})" "dumpsys telephony.registry (LteVopsSupportInfo)" "HIGH" "FAIL" "eNodeB / current RAT reports LTE VoPS unsupported"
+  elif [ -n "$VOPS" ]; then
     evidence_set "NET_VOPS" "Not Supported (vops=0)" "dumpsys telephony.registry" "HIGH" "FAIL" "BTS cell explicitly flags VoPS unsupported"
   else
     evidence_set "NET_VOPS" "Bitmask unexposed" "dumpsys telephony.registry" "LOW" "UNKNOWN" "VoPS parameter omitted in current telephony dump"

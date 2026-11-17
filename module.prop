@@ -1,6 +1,6 @@
 id=voenabler-vn-p3
 name=HXN VoEnabler VN — Pixel (< 6) Stock & Custom ROM VoLTE
-version=v3.2.0
-versionCode=320
+version=v3.2.1
+versionCode=321
 author=hxn-labs (imsforge core by okhsunrog)
 description=Enables VN VoLTE & VoWiFi on all Qualcomm Pixels before Pixel 6 (Pixel 1..5a 5G) across Stock ROMs and Custom ROMs (LineageOS, crDroid, PixelOS, Android 10-16). Supports userdebug cmd phone cc, ICCID XML cache, dynamic ImsService detection, and Google-signed ROW MBN overlay.

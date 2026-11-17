@@ -72,7 +72,7 @@ compat_parse_key_val() {
   local DEF="$3"
 
   local LINE
-  LINE=$(echo "$TEXT" | grep -m1 -E "(\b${KEY}\b|\"${KEY}\")" || echo "")
+  LINE=$(echo "$TEXT" | grep -m1 -E "(^|[^a-zA-Z0-9_])(${KEY}|\"${KEY}\")([^a-zA-Z0-9_]|$)" || echo "")
   if [ -z "$LINE" ]; then
     printf "%s" "$DEF"
     return 0
@@ -80,7 +80,7 @@ compat_parse_key_val() {
 
   # Lấy phần sau dấu '=' hoặc ':'
   local VAL
-  VAL=$(printf "%s" "$LINE" | sed -E "s/.*(\b${KEY}\b|\"${KEY}\")[ \t]*[:=][ \t]*([^,;\r\n]*).*/\2/" | sed -E 's/^[ "]*//; s/[ "]*$//')
+  VAL=$(printf "%s" "$LINE" | sed -E "s/.*(^|[^a-zA-Z0-9_])(${KEY}|\"${KEY}\")([^a-zA-Z0-9_]|$)[ \t]*[:=][ \t]*([^,;\r\n]*).*/\2/" | sed -E 's/^[ "]*//; s/[ "]*$//')
   if [ -n "$VAL" ]; then
     printf "%s" "$VAL"
   else

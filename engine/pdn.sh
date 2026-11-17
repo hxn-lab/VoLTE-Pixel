@@ -89,7 +89,7 @@ evaluate_pdn_layer() {
   local PDN_STATUS="UNKNOWN"
 
   if [ -n "$IMS_DC_BLOCK" ]; then
-    if echo "$IMS_DC_BLOCK" | grep -qE "(\bstate=CONNECTED\b|\bmState=CONNECTED\b|\bmState=2\b)" && ! echo "$IMS_DC_BLOCK" | grep -qE "(\bstate=DISCONNECTED\b|\bmState=DISCONNECTED\b)"; then
+    if echo "$IMS_DC_BLOCK" | grep -qE "((^|[^a-zA-Z0-9_])state=CONNECTED([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mState=CONNECTED([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mState=2([^0-9]|$))" && ! echo "$IMS_DC_BLOCK" | grep -qE "((^|[^a-zA-Z0-9_])state=DISCONNECTED([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mState=DISCONNECTED([^a-zA-Z0-9_]|$))"; then
       PDN_STATE_STR="IMS_PDN_CONNECTED (Dedicated Bearer Active)"
       PDN_STATUS="PASS"
     elif echo "$IMS_DC_BLOCK" | grep -qiE "CONNECTING"; then
@@ -128,7 +128,7 @@ evaluate_pdn_layer() {
     evidence_set "PDN_PCSCF" "UNKNOWN (PcscfAddresses field omitted in dump)" "dumpsys telephony.registry" "LOW" "UNKNOWN" "No P-CSCF telemetry in dump"
   elif [ -n "$CLEAN_PCSCF" ]; then
     local FIRST_IP
-    FIRST_IP=$(echo "$CLEAN_PCSCF" | awk '{print $1}' | tr -d ',')
+    FIRST_IP=$(echo "$CLEAN_PCSCF" | tr ',' ' ' | awk '{print $1}' | sed 's|^/||')
     if compat_is_ip_address "$FIRST_IP"; then
       evidence_set "PDN_PCSCF" "Discovered: ${CLEAN_PCSCF}" "dumpsys telephony.registry (PcscfAddresses)" "HIGH" "PASS" "Proxy-CSCF address allocated by carrier"
     else

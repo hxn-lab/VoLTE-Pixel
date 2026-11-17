@@ -24,7 +24,7 @@ echo "=== EXTRA DEEP-DIVE INTEGRITY ASSERTIONS ==="
 
 # Test 3: Substring check
 DC_SAMPLE="DataConnection: dc-1 apnType=ims state=DISCONNECTED reason=none"
-if echo "$DC_SAMPLE" | grep -qE "(\bstate=CONNECTED\b|\bmState=CONNECTED\b|\bmState=2\b)" && ! echo "$DC_SAMPLE" | grep -qE "(\bstate=DISCONNECTED\b|\bmState=DISCONNECTED\b)"; then
+if echo "$DC_SAMPLE" | grep -qE "((^|[^a-zA-Z0-9_])state=CONNECTED([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mState=CONNECTED([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mState=2([^0-9]|$))" && ! echo "$DC_SAMPLE" | grep -qE "((^|[^a-zA-Z0-9_])state=DISCONNECTED([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mState=DISCONNECTED([^a-zA-Z0-9_]|$))"; then
   echo "[FAIL] Substring matched DISCONNECTED as connected!"
   exit 1
 else
@@ -33,7 +33,7 @@ fi
 
 # Test 4: MMTEL voice check
 MMTEL_SAMPLE="MmTelFeature: CAPABILITY_TYPE_VOICE: false"
-if echo "$MMTEL_SAMPLE" | grep -qiE "(\bvoice[ \t]*[:=][ \t]*(true|1|enabled)\b|\bCAPABILITY_TYPE_VOICE[ \t]*[:=][ \t]*(true|1|enabled)\b|\bmVoiceCapable=true\b|\bvoiceCapable=true\b)"; then
+if echo "$MMTEL_SAMPLE" | grep -qiE "((^|[^a-zA-Z0-9_])voice[ \t]*[:=][ \t]*(true|1|enabled)([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])CAPABILITY_TYPE_VOICE[ \t]*[:=][ \t]*(true|1|enabled)([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mVoiceCapable=true([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])voiceCapable=true([^a-zA-Z0-9_]|$))"; then
   echo "[FAIL] Bare constant matched false voice capability!"
   exit 1
 else
@@ -194,4 +194,4 @@ else
   exit 1
 fi
 
-echo ">>> ALL v3.2.0 BEHAVIOR TESTS COMPLETED WITH 100% PASS RATE! <<<"
+echo ">>> ALL v3.2.1 BEHAVIOR TESTS COMPLETED WITH 100% PASS RATE! <<<"

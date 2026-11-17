@@ -60,7 +60,12 @@ if [ -f "$MODPATH/tools/carrierconfig-patcher.sh" ]; then
         ui_print "- Đã cập nhật bộ đệm XML ICCID của CarrierConfigLoader"
     fi
 
-    if [ "$KSU" = "true" ] && [ -d "$MODPATH/vendor" -o ! -d "$MODPATH/system/vendor" ]; then
+    # Magisk & APatch keep system/ prefix; KernelSU / KSU Next relocate vendor & product to module root
+    if [ "$KSU" = "true" ] && [ "$APATCH" != "true" ]; then
+        if [ ! -e /data/adb/metamodule ]; then
+            ui_print "! Lưu ý KSU: Chưa thấy /data/adb/metamodule (Meta-OverlayFS/NoMount/Mountify)."
+            ui_print "  Cài đặt mount metamodule để kích hoạt lớp gắn đè /product & /vendor."
+        fi
         MBN_OUT="$MODPATH"
     else
         MBN_OUT="$MODPATH/system"

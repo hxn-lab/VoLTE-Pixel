@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # ============================================================
-# HXN VoEnabler VN v3.2.0 — Late Boot Service (Stock & Custom ROM)
+# HXN VoEnabler VN v3.2.1 — Late Boot Service (Stock & Custom ROM)
 # Policy: Passive boot service (Zero global DB mutations at boot)
 # ============================================================
 MODDIR=${0%/*}
@@ -9,7 +9,7 @@ LOGFILE="$DATADIR/service.log"
 mkdir -p "$DATADIR"
 
 exec > "$LOGFILE" 2>&1
-echo "[$(date)] service.sh v3.2.0 starting..."
+echo "[$(date)] service.sh v3.2.1 starting..."
 
 until [ "$(getprop sys.boot_completed)" = "1" ]; do
     sleep 2
@@ -68,4 +68,4 @@ if command -v cmd >/dev/null 2>&1; then
         cmd phone ims enable -s "$slot" 2>/dev/null || true
     done
 fi
-echo "[$(date)] service.sh v3.2.0 completed."
+echo "[$(date)] service.sh v3.2.1 completed."

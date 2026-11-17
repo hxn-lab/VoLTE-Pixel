@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # ============================================================
-# HXN VoEnabler VN v3.2.0 — Layer D & F: IMS & SIP Forensics
+# HXN VoEnabler VN v3.2.1 — Layer D & F: IMS & SIP Forensics
 # engine/ims.sh
 # Author: hxn-labs
 # Policy: Multi-Layer Telemetry, Zero False Positive, Strict Disambiguation
@@ -76,11 +76,11 @@ evaluate_ims_layer() {
   local TECH_NAME="UNKNOWN"
 
   if [ -n "$DUMP_TEL" ]; then
-    if echo "$DUMP_TEL" | grep -qE "\bmImsRegisteredState=|\bmImsRegistered="; then
+    if echo "$DUMP_TEL" | grep -qE "(^|[^a-zA-Z0-9_])mImsRegisteredState=|(^|[^a-zA-Z0-9_])mImsRegistered="; then
       HAS_REG_FIELD="true"
-      if echo "$DUMP_TEL" | grep -qE "\bmImsRegisteredState=true\b|\bmImsRegistered=true\b"; then
+      if echo "$DUMP_TEL" | grep -qE "(^|[^a-zA-Z0-9_])mImsRegisteredState=true([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mImsRegistered=true([^a-zA-Z0-9_]|$)"; then
         REG_STATE_VAL="true"
-      elif echo "$DUMP_TEL" | grep -qE "\bmImsRegisteredState=false\b|\bmImsRegistered=false\b"; then
+      elif echo "$DUMP_TEL" | grep -qE "(^|[^a-zA-Z0-9_])mImsRegisteredState=false([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mImsRegistered=false([^a-zA-Z0-9_]|$)"; then
         REG_STATE_VAL="false"
       fi
     fi
@@ -136,9 +136,9 @@ evaluate_ims_layer() {
   if [ -n "$DUMP_TEL" ]; then
     if echo "$DUMP_TEL" | grep -qiE "MmTelFeature|CAPABILITY_TYPE_VOICE|mVoiceCapable|mMmTelCapabilities"; then
       HAS_MMTEL_FIELD="true"
-      if echo "$DUMP_TEL" | grep -qiE "(\bvoice[ \t]*[:=][ \t]*(true|1|enabled)\b|\bCAPABILITY_TYPE_VOICE[ \t]*[:=][ \t]*(true|1|enabled)\b|\bmVoiceCapable=true\b|\bvoiceCapable=true\b)"; then
+      if echo "$DUMP_TEL" | grep -qiE "((^|[^a-zA-Z0-9_])voice[ \t]*[:=][ \t]*(true|1|enabled)([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])CAPABILITY_TYPE_VOICE[ \t]*[:=][ \t]*(true|1|enabled)([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mVoiceCapable=true([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])voiceCapable=true([^a-zA-Z0-9_]|$))"; then
         MMTEL_VOICE_VAL="true"
-      elif echo "$DUMP_TEL" | grep -qiE "(\bvoice[ \t]*[:=][ \t]*(false|0|disabled)\b|\bCAPABILITY_TYPE_VOICE[ \t]*[:=][ \t]*(false|0|disabled)\b|\bmVoiceCapable=false\b|\bvoiceCapable=false\b)"; then
+      elif echo "$DUMP_TEL" | grep -qiE "((^|[^a-zA-Z0-9_])voice[ \t]*[:=][ \t]*(false|0|disabled)([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])CAPABILITY_TYPE_VOICE[ \t]*[:=][ \t]*(false|0|disabled)([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mVoiceCapable=false([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])voiceCapable=false([^a-zA-Z0-9_]|$))"; then
         MMTEL_VOICE_VAL="false"
       fi
     fi

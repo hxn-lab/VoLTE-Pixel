@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # ============================================================
-# HXN VoEnabler VN v3.2.0 — Adaptive Enablement Engine
+# HXN VoEnabler VN v3.2.1 — Adaptive Enablement Engine
 # engine/enable.sh
 # Author: hxn-labs
 # Policy: Evidence-Driven Adaptive Enablement & Schema 2.1 Backup
@@ -314,14 +314,14 @@ SNAPEOF
   POST_CC=$(compat_eval_carrier_config_key "$DUMP_CC_POST" "carrier_volte_available_bool")
 
   local POST_REG="false"
-  if echo "$DUMP_POST" | grep -qE "\bmImsRegisteredState=true\b|\bmImsRegistered=true\b"; then
+  if echo "$DUMP_POST" | grep -qE "(^|[^a-zA-Z0-9_])mImsRegisteredState=true([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mImsRegistered=true([^a-zA-Z0-9_]|$)"; then
     POST_REG="true"
   elif echo "$DUMP_DEBUG_POST" | grep -qiE "imsRegistration.*registered=true|mImsMmTelRegistrationState = 2"; then
     POST_REG="true"
   fi
 
   local POST_MMTEL="false"
-  if echo "$DUMP_POST" | grep -qiE "(\bvoice[ \t]*[:=][ \t]*(true|1|enabled)\b|\bCAPABILITY_TYPE_VOICE[ \t]*[:=][ \t]*(true|1|enabled)\b|\bmVoiceCapable=true\b|\bvoiceCapable=true\b)"; then
+  if echo "$DUMP_POST" | grep -qiE "((^|[^a-zA-Z0-9_])voice[ \t]*[:=][ \t]*(true|1|enabled)([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])CAPABILITY_TYPE_VOICE[ \t]*[:=][ \t]*(true|1|enabled)([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])mVoiceCapable=true([^a-zA-Z0-9_]|$)|(^|[^a-zA-Z0-9_])voiceCapable=true([^a-zA-Z0-9_]|$))"; then
     POST_MMTEL="true"
   elif echo "$DUMP_DEBUG_POST" | grep -qE "mMmTelCapabilities=\[Voice: true"; then
     POST_MMTEL="true"

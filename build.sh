@@ -3,7 +3,7 @@ set -eu
 
 ROOT_DIR=$(cd "$(dirname "$0")" && pwd)
 OUT_DIR="${ROOT_DIR}/dist"
-OUT_FILE="${OUT_DIR}/voenabler-vn-pixel-qcom-v3.2.0-hxn-labs.zip"
+OUT_FILE="${OUT_DIR}/voenabler-vn-pixel-qcom-v3.2.1-hxn-labs.zip"
 
 mkdir -p "$OUT_DIR"
 rm -f "$OUT_FILE"

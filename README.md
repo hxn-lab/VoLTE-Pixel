@@ -6,7 +6,7 @@ Module Magisk / KernelSU / APatch giúp kích hoạt **VoLTE** (và mở sẵn c
 
 ## 1. Thiết bị & Nhà mạng hỗ trợ
 
-### Thiết bị tương thích (14 dòng Pixel Qualcomm, Android 10–15)
+### Thiết bị tương thích (14 dòng Pixel Qualcomm, Android 10–16)
 
 | Dòng máy | Codename | SoC Qualcomm | 
 | ----- | ----- | ----- | 
@@ -29,6 +29,7 @@ Module Magisk / KernelSU / APatch giúp kích hoạt **VoLTE** (và mở sẵn c
 ## 2. Hỗ trợ Stock ROM & Custom ROM AOSP (Android 10–16)
 
 * **Stock ROM**: Vá `others.pb`/`default.pb` qua `imsforge` + vá trực tiếp XML ICCID + gắn đè `ROW/Commercial/mcfg_sw.mbn`.
+
 * **Custom ROM AOSP (LineageOS 22.2, crDroid 11.x, PixelOS, Evolution X...)**: Tự động bỏ qua `imsforge` nếu ROM không dùng `CarrierSettings`, gọi `cmd phone cc set-value` trực tiếp trên bản dựng `userdebug`/`eng`, tự dò gói `ImsService` của ROM (`org.codeaurora.ims` / `com.qualcomm.qti.ims` / `com.google.android.ims`), và vẫn gắn đè `ROW/Commercial` MBN lên `/vendor`.
 
 ## 3. Cơ chế hoạt động (Vì sao không chỉ dùng `build.prop` hay ADB?)
@@ -49,11 +50,11 @@ Trên Google Pixel 1–5a chạy ROM Stock, việc bật VoLTE bị chặn ở c
 
    * **Giải pháp**: Thay vì nạp file `.mbn` ngoại lai từ hãng khác (dễ bị từ chối chữ ký OEM) hay dùng [EfsTools](https://github.com/JohnBel/EfsTools) / QPST ghi trực tiếp vào phân vùng EFS, module sử dụng **chính file `generic/common/ROW/Commercial/mcfg_sw.mbn` đã được Google ký sẵn trên `/vendor`** để gắn đè systemless lên `WildCard/Wildcard/mcfg_sw.mbn` qua Magisk overlay, đồng thời xóa `/data/vendor/modem_fdr/fdr_check` khi cài đặt để modem nạp lại MBN mới.
 
-3. **Bind `org.codeaurora.ims` đúng trình tự**:
+3. **Bind `ImsService` đúng trình tự**:
 
-   * Khởi động lại `com.android.phone` trước để `CarrierConfigLoader` nạp cấu hình VoLTE, sau đó gọi `cmd phone ims set-ims-service -s 0 -c/-d org.codeaurora.ims` và `cmd phone ims enable -s 0`.
+   * Khởi động lại `com.android.phone` trước để `CarrierConfigLoader` nạp cấu hình VoLTE, sau đó tự dò gói IMS của ROM (`org.codeaurora.ims` / `com.qualcomm.qti.ims` / `com.google.android.ims`) rồi gọi `cmd phone ims set-ims-service -s 0 -c/-d <pkg>` và `cmd phone ims enable -s 0`.
 
-## 3. Yêu cầu & Điều kiện tiên quyết
+## 4. Yêu cầu & Điều kiện tiên quyết
 
 1. **Đã mở khóa Bootloader và Root** bằng **Magisk** (hoặc **KernelSU / APatch** kèm mount metamodule như Meta-OverlayFS / NoMount / Mountify).
 
@@ -65,7 +66,7 @@ Trên Google Pixel 1–5a chạy ROM Stock, việc bật VoLTE bị chặn ở c
 
    * **MobiFone**: Soạn `DK VOLTE` gửi `999`.
 
-## 4. Hướng dẫn cài đặt & Kiểm tra
+## 5. Hướng dẫn cài đặt & Kiểm tra
 
 ### Cài đặt
 
@@ -96,41 +97,111 @@ Trên Google Pixel 1–5a chạy ROM Stock, việc bật VoLTE bị chặn ở c
 
 Gỡ module trực tiếp trong trình quản lý Magisk rồi **Reboot**. Script `uninstall.sh` sẽ tự động dọn cache XML đã vá và đặt lại `fdr_check` để modem nạp lại cấu hình gốc của Google.
 
-## 5. Cấu trúc mã nguồn & Tự đóng gói (Build)
+## 6. Tất cả chức năng trên Terminal (`hxn-volte` & `imsforge`)
+
+Mở terminal trên máy (Termux) hoặc qua `adb shell` rồi cấp quyền root (`su`):
+
+```
+su
+hxn-volte --menu
+
+```
+
+### Danh sách đầy đủ các lệnh `hxn-volte`
+
+#### Nhóm lệnh chẩn đoán & kiểm tra (Chỉ đọc — không sửa hệ thống)
+
+| Lệnh | Chức năng chi tiết | 
+| ----- | ----- | 
+| `hxn-volte scan` | Quét toàn diện cả 5 tầng (Thiết bị → SIM/PLMN → LTE/VoPS → IMS/MMTEL → PDN/P-CSCF) kèm phân tích nguyên nhân gốc và danh mục MBN. | 
+| `hxn-volte diagnose` | Chạy bộ **Root Cause Intelligence 2.0** (16 mã lỗi chuẩn) để chỉ ra chính xác điểm nghẽn kèm nguồn bằng chứng. | 
+| `hxn-volte timeline` | Hiển thị tiến trình đăng ký IMS theo **10 giai đoạn** (từ LTE Attach, VoPS, ImsService, IMS APN, NetworkRequest, PDN, P-CSCF, SIP REGISTER đến MMTEL và cuộc gọi thực). | 
+| `hxn-volte ims` | Kiểm tra sâu tầng IMS & SIP: gói `ImsService` đang bind, `mImsMmTelRegistrationState`, `mMmTelCapabilities` (`Voice`/`Video`/`SMS`) và mã lỗi SIP nếu có. | 
+| `hxn-volte pdn` | Kiểm tra cấu hình `CarrierConfig` (`carrier_volte_available_bool`), trạng thái kênh `ims` PDN (`CONNECTED`/`DISCONNECTED`) và địa chỉ IP P-CSCF. | 
+| `hxn-volte carrier` | Kiểm tra phần cứng SIM, mã nhà mạng PLMN (`45204`, `45202`, `45201`, `45205`, `45209`), trạng thái 2 SIM DSDS, `CarrierId`/`SubId` và USIM/ISIM. | 
+| `hxn-volte mbn` | Liệt kê trạng thái thư mục Qualcomm MBN trên `/vendor`, `modem_fdr` và các profile tương thích. | 
+| `hxn-volte banking` | Kiểm tra trạng thái bảo mật hệ thống (Bootloader, Verified Boot, SELinux, dấu hiệu root). | 
+
+#### Nhóm lệnh kích hoạt, xác minh & khôi phục
+
+| Lệnh | Chức năng chi tiết | 
+| ----- | ----- | 
+| `hxn-volte plan` | Xem trước kế hoạch kích hoạt thích ứng (chỉ đọc, không ghi bất kỳ thay đổi nào). | 
+| `hxn-volte enable` | Tạo bản sao lưu **Snapshot Schema 2.1**, bật các cờ `Settings.Global` & `resetprop`, vá XML ICCID/`carriers.json`, khởi động lại `com.android.phone`, bind `ImsService` và tùy chọn bật/tắt Chế độ máy bay để đăng ký lại mạng. | 
+| `hxn-volte verify` | Xác minh nhanh các chỉ số sống sau khi kích hoạt (`IMS`, `PDN`, `P-CSCF`, `Timeline 10 bước`). | 
+| `hxn-volte rollback` | Khôi phục nguyên trạng toàn bộ các khóa `Settings.Global` về đúng thời điểm trước khi chạy `enable` dựa trên Snapshot Schema 2.1. | 
+| `hxn-volte fdr` | Làm mới bộ nhớ đệm cấu hình modem (`modem_fdr`) để modem nạp lại danh sách MBN ở lần khởi động tiếp theo. | 
+
+#### Nhóm lệnh kiểm thử & giao diện tương tác
+
+| Lệnh | Chức năng chi tiết | 
+| ----- | ----- | 
+| `hxn-volte --menu` (hoặc `menu`) | Mở menu tương tác đánh số `[0–13]` trên terminal. | 
+| `hxn-volte selftest` | Chạy bộ **41 bài kiểm thử hành vi tự động** với dữ liệu giả lập (cú pháp POSIX, IPv4/IPv6, parser `CarrierConfig`/`IMS`/`PDN`, ẩn PII, kiểm tra Snapshot). | 
+| `hxn-volte help` | In bảng hướng dẫn nhanh các lệnh và mã thoát (`0` = Thành công, `1` = Lỗi, `2` = Thiết bị không hỗ trợ). | 
+
+### Công cụ phụ trợ (`imsforge` & script hệ thống)
+
+* **Kiểm tra trạng thái nhanh từ root manager (hoặc terminal)**:
+
+  ```
+  su -c 'sh /data/adb/modules/voenabler-vn-p3/action.sh'
+  
+  ```
+
+* **Xem nhật ký vá lúc khởi động**:
+
+  ```
+  su -c 'cat /data/adb/modules/voenabler-vn-p3/last-boot.log'
+  su -c 'cat /data/adb/imsforge/service.log'
+  su -c 'cat /data/adb/imsforge/status.json'
+  
+  ```
+
+* **Truy vấn trực tiếp nhân `imsforge`**:
+
+  ```
+  su -c '/data/adb/modules/voenabler-vn-p3/bin/imsforge detect'
+  su -c '/data/adb/modules/voenabler-vn-p3/bin/imsforge status'
+  su -c '/data/adb/modules/voenabler-vn-p3/bin/imsforge read-config --config /data/adb/imsforge/carriers.json'
+  
+  ```
+
+## 7. Cấu trúc mã nguồn & Tự đóng gói (Build)
 
 ```
 .
 ├── bin/
-│   ├── hxn-volte               # CLI chẩn đoán & kích hoạt VoLTE đa tầng
-│   └── imsforge                # Binary vá CarrierSettings protobuf (AArch64)
+│   ├── hxn-volte                # CLI chẩn đoán & kích hoạt VoLTE đa tầng
+│   └── imsforge                 # Binary vá CarrierSettings protobuf (AArch64)
 ├── engine/
-│   ├── device.sh               # Nhận diện 14 dòng Pixel Qualcomm (< Pixel 6)
-│   ├── carrier.sh              # Phân tích PLMN VN & Dual-SIM DSDS
-│   ├── network.sh              # Kiểm tra LTE bearer & VoPS
-│   ├── ims.sh                  # Đọc ImsResolver, TelephonyDebugService & HAL
-│   ├── pdn.sh                  # Kiểm tra IMS APN, PDN & P-CSCF
-│   ├── enable.sh               # Kích hoạt thích ứng & Snapshot Schema 2.1
-│   ├── rollback.sh             # Khôi phục nguyên trạng theo Snapshot
-│   ├── diagnose.sh             # Chẩn đoán nguyên nhân gốc đa tầng
-│   ├── timeline.sh             # Theo dõi 10 giai đoạn đăng ký IMS
-│   ├── mbn.sh                  # Kiểm kê cấu hình Qualcomm MBN
-│   └── banking.sh              # Kiểm tra SELinux & trạng thái bảo mật
+│   ├── device.sh                # Nhận diện 14 dòng Pixel Qualcomm (< Pixel 6)
+│   ├── carrier.sh               # Phân tích PLMN VN & Dual-SIM DSDS
+│   ├── network.sh               # Kiểm tra LTE bearer & VoPS
+│   ├── ims.sh                   # Đọc ImsResolver, TelephonyDebugService & HAL
+│   ├── pdn.sh                   # Kiểm tra IMS APN, PDN & P-CSCF
+│   ├── enable.sh                # Kích hoạt thích ứng & Snapshot Schema 2.1
+│   ├── rollback.sh              # Khôi phục nguyên trạng theo Snapshot
+│   ├── diagnose.sh              # Chẩn đoán nguyên nhân gốc đa tầng
+│   ├── timeline.sh              # Theo dõi 10 giai đoạn đăng ký IMS
+│   ├── mbn.sh                   # Kiểm kê cấu hình Qualcomm MBN
+│   └── banking.sh               # Kiểm tra SELinux & trạng thái bảo mật
 ├── tools/
 │   ├── carrierconfig-patcher.sh # Vá XML ICCID, tạo carriers.json & MBN overlay
-│   ├── android-compat.sh       # Lớp tương thích dumpsys & IPv4/IPv6 validator
-│   ├── evidence.sh             # Hệ thống ghi nhận bằng chứng đa tầng
-│   ├── selftest.sh             # 41 bài kiểm thử hành vi tự động
-│   └── shell-utils.sh          # Tiện ích UI & ẩn PII (IMSI/ICCID/SĐT)
+│   ├── android-compat.sh        # Lớp tương thích dumpsys & IPv4/IPv6 validator
+│   ├── evidence.sh              # Hệ thống ghi nhận bằng chứng đa tầng
+│   ├── selftest.sh              # 41 bài kiểm thử hành vi tự động
+│   └── shell-utils.sh           # Tiện ích UI & ẩn PII (IMSI/ICCID/SĐT)
 ├── tests/
-│   └── test_suite.sh           # Bộ kiểm thử tích hợp độc lập
-├── webroot/                    # Giao diện WebUI (từ imsforge)
-├── customize.sh                # Script cài đặt Magisk / KernelSU
-├── post-fs-data.sh             # Vá CarrierSettings & gắn MBN overlay lúc boot
-├── service.sh                  # Đồng bộ cache & bind org.codeaurora.ims
-├── action.sh / probe.sh        # Script kiểm tra nhanh trong root manager
-├── uninstall.sh                # Hoàn tác sạch sẽ khi gỡ module
-├── module.prop                 # Metadata module
-└── build.sh                    # Script đóng gói thành file flashable .zip
+│   └── test_suite.sh            # Bộ kiểm thử tích hợp độc lập
+├── webroot/                     # Giao diện WebUI (từ imsforge)
+├── customize.sh                 # Script cài đặt Magisk / KernelSU
+├── post-fs-data.sh              # Vá CarrierSettings & gắn MBN overlay lúc boot
+├── service.sh                   # Đồng bộ cache & bind ImsService
+├── action.sh / probe.sh         # Script kiểm tra nhanh trong root manager
+├── uninstall.sh                 # Hoàn tác sạch sẽ khi gỡ module
+├── module.prop                  # Metadata module
+└── build.sh                     # Script đóng gói thành file flashable .zip
 
 ```
 
@@ -142,7 +213,7 @@ sh tests/test_suite.sh
 
 ```
 
-## 6. Ghi nhận & Tham chiếu
+## 8. Ghi nhận & Tham chiếu
 
 * **`imsforge`** (`bin/imsforge`, `webroot/`, `probe*.awk`) của tác giả **okhsunrog** — công cụ vá `CarrierSettings` `.pb` trực tiếp trên thiết bị.
 

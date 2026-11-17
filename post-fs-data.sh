@@ -36,7 +36,9 @@ fi
 case "$LAYOUT" in
     product | system/product) ;;
     *)
-        if [ "$KSU" = "true" ] || [ -d /data/adb/ksu ]; then
+        if [ "$APATCH" = "true" ] || [ -d /data/adb/ap ]; then
+            LAYOUT=system/product
+        elif [ "$KSU" = "true" ] || [ -d /data/adb/ksu ]; then
             LAYOUT=product
         else
             LAYOUT=system/product
