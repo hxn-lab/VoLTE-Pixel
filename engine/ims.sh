@@ -37,13 +37,16 @@ evaluate_ims_layer() {
   fi
 
   if [ "$IMS_BOUND" = "false" ] && [ -n "$DUMP_TEL" ] && [ -n "$DUMP_DEBUG" ] && command -v cmd >/dev/null 2>&1; then
-    local CMD_SVC
-    CMD_SVC=$(cmd phone ims get-ims-service -s 0 -c 2>/dev/null | tr -d '\r\n ' || echo "")
-    [ -z "$CMD_SVC" ] && CMD_SVC=$(cmd phone ims get-ims-service -s 0 -d 2>/dev/null | tr -d '\r\n ' || echo "")
+    local CMD_SVC=""
+    for s in 0 1; do
+      CMD_SVC=$(cmd phone ims get-ims-service -s "$s" -c 2>/dev/null | tr -d '\r\n ' || echo "")
+      [ -z "$CMD_SVC" ] && CMD_SVC=$(cmd phone ims get-ims-service -s "$s" -d 2>/dev/null | tr -d '\r\n ' || echo "")
+      [ -n "$CMD_SVC" ] && break
+    done
     local PID_IMS2=""
     command -v pidof >/dev/null 2>&1 && PID_IMS2=$(pidof org.codeaurora.ims 2>/dev/null || echo "")
     if [ "$CMD_SVC" = "org.codeaurora.ims" ] && [ -n "$PID_IMS2" ]; then
-      IMS_PKG="org.codeaurora.ims (PID=${PID_IMS2}, slot0=${CMD_SVC})"
+      IMS_PKG="org.codeaurora.ims (PID=${PID_IMS2})"
       IMS_BOUND="true"
       IMS_BOUND_SRC="cmd phone ims get-ims-service & pidof"
     fi
@@ -85,7 +88,8 @@ evaluate_ims_layer() {
       fi
     fi
 
-    TECH_VAL=$(echo "$DUMP_TEL" | grep -m1 -E "mImsRegistrationTech" | sed -E 's/.*=([0-9]+).*/\1/' || echo "")
+    TECH_VAL=$(echo "$DUMP_TEL" | grep -E "mImsRegistrationTech[ =]+[0123]([^0-9]|$)" | head -n1 | sed -E 's/.*=([0-9]+).*/\1/' || echo "")
+    [ -z "$TECH_VAL" ] && TECH_VAL=$(echo "$DUMP_TEL" | grep -m1 -E "mImsRegistrationTech" | sed -E 's/.*=([0-9]+).*/\1/' || echo "")
     case "$TECH_VAL" in
       0) TECH_NAME="LTE (VoLTE)" ;;
       1) TECH_NAME="IWLAN (VoWiFi)" ;;

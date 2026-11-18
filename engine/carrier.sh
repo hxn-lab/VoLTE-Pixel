@@ -71,8 +71,8 @@ evaluate_carrier_layer() {
   # 3. Carrier ID & Subscription ID
   local CARRIER_ID="" SUB_ID=""
   if [ -n "$DUMP_TEL" ]; then
-    CARRIER_ID=$(echo "$DUMP_TEL" | grep -m1 -E "mCarrierId|carrier_id" | sed -E 's/.*= *([0-9]+).*/\1/' || echo "")
-    SUB_ID=$(echo "$DUMP_TEL" | grep -m1 -E "mSubId|subId" | sed -E 's/.*= *([0-9]+).*/\1/' || echo "")
+    CARRIER_ID=$(echo "$DUMP_TEL" | grep -E "(mCarrierId|carrier_id)[ =]+[1-9][0-9]*" | head -n1 | sed -E 's/.*= *([0-9]+).*/\1/' || echo "")
+    SUB_ID=$(echo "$DUMP_TEL" | grep -E "(mSubId|subId)[ =]+[1-9][0-9]*" | head -n1 | sed -E 's/.*= *([0-9]+).*/\1/' || echo "")
   fi
 
   if [ -n "$CARRIER_ID" ]; then

@@ -29,8 +29,13 @@ evaluate_network_layer() {
 
   # 2. Bóc tách Data Registration State và Data RAT (Hỗ trợ cả Android 9-11 và Android 12+ mServiceState)
   local DATA_STATE DATA_RAT
-  DATA_STATE=$(echo "$DUMP_TEL" | grep -m1 -E "mDataRegistrationState|mDataRegState" | sed -E 's/.*(mDataRegistrationState|mDataRegState)[ =]+([0-9]+).*/\2/' || echo "")
-  DATA_RAT=$(echo "$DUMP_TEL" | grep -m1 -E "mRilDataRadioTechnology|mDataRadioTechnology|getRilDataRadioTechnology" | sed -E 's/.*(mRilDataRadioTechnology|mDataRadioTechnology|getRilDataRadioTechnology)[ =]+([0-9A-Za-z_]+).*/\2/' || echo "")
+  if echo "$DUMP_TEL" | grep -qE "(mDataRegistrationState|mDataRegState)[ =]+0([^0-9]|$)"; then
+    DATA_STATE="0"
+  else
+    DATA_STATE=$(echo "$DUMP_TEL" | grep -m1 -E "mDataRegistrationState|mDataRegState" | sed -E 's/.*(mDataRegistrationState|mDataRegState)[ =]+([0-9]+).*/\2/' || echo "")
+  fi
+  DATA_RAT=$(echo "$DUMP_TEL" | grep -E "mRilDataRadioTechnology|mDataRadioTechnology|getRilDataRadioTechnology" | grep -E "LTE|lte|NR|nr|14|19|20" | head -n1 | sed -E 's/.*(mRilDataRadioTechnology|mDataRadioTechnology|getRilDataRadioTechnology)[ =]+([0-9A-Za-z_]+).*/\2/' || echo "")
+  [ -z "$DATA_RAT" ] && DATA_RAT=$(echo "$DUMP_TEL" | grep -m1 -E "mRilDataRadioTechnology|mDataRadioTechnology|getRilDataRadioTechnology" | sed -E 's/.*(mRilDataRadioTechnology|mDataRadioTechnology|getRilDataRadioTechnology)[ =]+([0-9A-Za-z_]+).*/\2/' || echo "")
 
   # 3. Phân biệt rõ ràng giữa LTE, IWLAN (Wi-Fi Calling), GSM/UMTS, NR (Section 7)
   if [ "$RADIO_OFF" = "true" ]; then
@@ -77,11 +82,12 @@ evaluate_network_layer() {
 
   # 5. VoPS Support (Voice over PS Session in S1 mode)
   local VOPS
-  VOPS=$(echo "$DUMP_TEL" | grep -m1 -iE "mVopsSupport|vops" | sed -E 's/.*(mVopsSupport|vops)[ =]+([0-9a-zA-Z_]+).*/\2/' || echo "")
-  if [ "$VOPS" = "3" ] || [ "$VOPS" = "0" ] || [ "$VOPS" = "false" ]; then
-    evidence_set "NET_VOPS" "Not Supported (vops=${VOPS})" "dumpsys telephony.registry (LteVopsSupportInfo)" "HIGH" "FAIL" "eNodeB / current RAT reports LTE VoPS unsupported"
-  elif [ -n "$VOPS" ]; then
-    evidence_set "NET_VOPS" "Not Supported (vops=0)" "dumpsys telephony.registry" "HIGH" "FAIL" "BTS cell explicitly flags VoPS unsupported"
+  VOPS=$(echo "$DUMP_TEL" | grep -iE "mVopsSupport|vops" | grep -E "[ =]+(1|2|true)([^0-9a-zA-Z_]|$)" | head -n1 | sed -E 's/.*(mVopsSupport|vops)[ =]+([0-9a-zA-Z_]+).*/\2/' || echo "")
+  [ -z "$VOPS" ] && VOPS=$(echo "$DUMP_TEL" | grep -m1 -iE "mVopsSupport|vops" | sed -E 's/.*(mVopsSupport|vops)[ =]+([0-9a-zA-Z_]+).*/\2/' || echo "")
+  if [ "$VOPS" = "1" ] || [ "$VOPS" = "2" ] || [ "$VOPS" = "true" ]; then
+    evidence_set "NET_VOPS" "Supported (vops=${VOPS})" "dumpsys telephony.registry (LteVopsSupportInfo)" "HIGH" "PASS" "eNodeB cell supports VoPS"
+  elif [ "$VOPS" = "3" ] || [ "$VOPS" = "0" ] || [ "$VOPS" = "false" ] || [ -n "$VOPS" ]; then
+    evidence_set "NET_VOPS" "Not Supported (vops=${VOPS:-0})" "dumpsys telephony.registry (LteVopsSupportInfo)" "HIGH" "FAIL" "eNodeB / current RAT reports LTE VoPS unsupported"
   else
     evidence_set "NET_VOPS" "Bitmask unexposed" "dumpsys telephony.registry" "LOW" "UNKNOWN" "VoPS parameter omitted in current telephony dump"
   fi

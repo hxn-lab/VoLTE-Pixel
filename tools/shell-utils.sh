@@ -92,7 +92,7 @@ ui_error() {
 ui_banner() {
   printf "${C_CYAN}${C_BOLD}"
   echo "================================================================="
-  echo "   HXN VoEnabler VN v3.0.0 — Definitive VoLTE Release"
+  echo "   HXN VoEnabler VN v3.2.9 — Definitive VoLTE Release"
   echo "      Google CarrierSettings Patch & Qualcomm MBN Toolkit 3.0"
   echo "                     Developed by hxn-labs"
   echo "================================================================="

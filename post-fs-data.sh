@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # ============================================================
-# HXN VoEnabler VN v3.1.0 — Early Boot Engine (post-fs-data)
+# HXN VoEnabler VN v3.2.9 — Early Boot Engine (post-fs-data)
 # Target: All Qualcomm Google Pixels (< Pixel 6)
 # ============================================================
 LOG_NAME=last-boot.log
@@ -48,7 +48,7 @@ esac
 OUT="$MODDIR/$LAYOUT/etc/CarrierSettings"
 
 {
-    echo "[$(date)] post-fs-data v3.1.0 (device: $(getprop ro.product.device))"
+    echo "[$(date)] post-fs-data v3.2.9 (device: $(getprop ro.product.device))"
     echo "  output: $OUT"
 
     if [ -f "$MODDIR/tools/carrierconfig-patcher.sh" ]; then
@@ -77,8 +77,17 @@ OUT="$MODDIR/$LAYOUT/etc/CarrierSettings"
         else
             MBN_OUT="$MODDIR/system"
         fi
+        if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ] || [ -d /data/adb/ksu ] || [ -d /data/adb/ap ]; then
+            if auto_enable_metamodule; then
+                echo "  [✓] Metamodule mount auto-enabled"
+            fi
+        fi
         if apply_pixel_qcom_mbn_overlay "$MBN_OUT"; then
             echo "  [✓] Qualcomm Google-signed Commercial MBN overlay active"
+        fi
+        if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ] || [ -d /data/adb/ksu ] || [ -d /data/adb/ap ]; then
+            apply_bind_mount_fallback "$MODDIR"
+            echo "  [✓] Bind-mount fallback checked"
         fi
     fi
 } > "$MODDIR/$LOG_NAME" 2>&1

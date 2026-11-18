@@ -80,7 +80,7 @@ compat_parse_key_val() {
 
   # Lấy phần sau dấu '=' hoặc ':'
   local VAL
-  VAL=$(printf "%s" "$LINE" | sed -E "s/.*(^|[^a-zA-Z0-9_])(${KEY}|\"${KEY}\")([^a-zA-Z0-9_]|$)[ \t]*[:=][ \t]*([^,;\r\n]*).*/\2/" | sed -E 's/^[ "]*//; s/[ "]*$//')
+  VAL=$(printf "%s" "$LINE" | sed -E "s/.*(^|[^a-zA-Z0-9_])(${KEY}|\"${KEY}\")([^a-zA-Z0-9_]|$)[ \t]*[:=][ \t]*([^,;\r\n]*).*/\4/" | sed -E 's/^[ "]*//; s/[ "]*$//')
   if [ -n "$VAL" ]; then
     printf "%s" "$VAL"
   else

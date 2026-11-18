@@ -51,6 +51,12 @@ evaluate_pdn_layer() {
       HAS_IMS_APN="true"
     fi
   fi
+  if [ "$HAS_IMS_APN" != "true" ] && command -v content >/dev/null 2>&1; then
+    if content query --uri content://telephony/carriers --projection type --where "type LIKE '%ims%'" 2>/dev/null | grep -qi "ims"; then
+      HAS_APN_BLOCK="true"
+      HAS_IMS_APN="true"
+    fi
+  fi
 
   if [ "$HAS_IMS_APN" = "true" ]; then
     evidence_set "PDN_IMS_APN" "IMS_APN_PRESENT (Type 'ims' recognized in telephony provider)" "dumpsys telephony.registry (DataConnectionTracker)" "HIGH" "PASS" "none"

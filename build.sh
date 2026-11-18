@@ -3,7 +3,7 @@ set -eu
 
 ROOT_DIR=$(cd "$(dirname "$0")" && pwd)
 OUT_DIR="${ROOT_DIR}/dist"
-OUT_FILE="${OUT_DIR}/voenabler-vn-pixel-qcom-v3.2.1-hxn-labs.zip"
+OUT_FILE="${OUT_DIR}/voenabler-vn-pixel-qcom-v3.2.9-hxn-labs.zip"
 
 mkdir -p "$OUT_DIR"
 rm -f "$OUT_FILE"
@@ -15,10 +15,10 @@ if command -v zip >/dev/null 2>&1; then
       META-INF \
       bin \
       engine \
+      mbn \
       system \
       tools \
       webroot \
-      action.sh \
       customize.sh \
       module.prop \
       post-fs-data.sh \
@@ -27,6 +27,7 @@ if command -v zip >/dev/null 2>&1; then
       probe-radio.awk \
       probe.sh \
       service.sh \
+      system.prop \
       uninstall.sh \
       -x "*.DS_Store"
   )
@@ -35,11 +36,11 @@ elif command -v python3 >/dev/null 2>&1; then
 import os, sys, zipfile
 
 root_dir, out_file = sys.argv[1], sys.argv[2]
-include_dirs = {"META-INF", "bin", "engine", "system", "tools", "webroot"}
+include_dirs = {"META-INF", "bin", "engine", "mbn", "system", "tools", "webroot"}
 include_files = {
-    "action.sh", "customize.sh", "module.prop", "post-fs-data.sh",
+    "customize.sh", "module.prop", "post-fs-data.sh",
     "probe-carrier.awk", "probe-ims.awk", "probe-radio.awk",
-    "probe.sh", "service.sh", "uninstall.sh"
+    "probe.sh", "service.sh", "system.prop", "uninstall.sh"
 }
 
 with zipfile.ZipFile(out_file, "w", zipfile.ZIP_DEFLATED) as zf:

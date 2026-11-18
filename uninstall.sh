@@ -8,3 +8,4 @@ rm -f /data/vendor/modem_fdr/fdr_check 2>/dev/null
 # Clean imsforge stock cache & module backup
 rm -rf /data/adb/imsforge/stock /data/adb/imsforge/stock.generations 2>/dev/null
 rm -f /data/adb/modules/voenabler-vn-p3/.state_backup.json 2>/dev/null
+rm -f /data/adb/imsforge/last_plmn 2>/dev/null || true

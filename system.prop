@@ -19,3 +19,5 @@ persist.vendor.radio.carrier_override=1
 persist.vendor.radio.custom_ecc=1
 persist.vendor.radio.data_con_rprt=1
 persist.vendor.radio.relay_oprt_change=1
+persist.data.iwlan.enable=true
+persist.data.iwlan.ipsec.ap=1

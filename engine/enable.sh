@@ -208,13 +208,13 @@ SNAPEOF
 
   # Bước 9C: Đảm bảo APN ims tồn tại trong database Telephony
   if command -v content >/dev/null 2>&1; then
+    local ACTIVE_PLMN
+    ACTIVE_PLMN=$(compat_getprop "gsm.sim.operator.numeric" "45204" | tr ',' '\n' | grep -E '^[0-9]{5,6}$' | head -n1)
+    [ -z "$ACTIVE_PLMN" ] && ACTIVE_PLMN="45204"
     local APN_CHECK
-    APN_CHECK=$(content query --uri content://telephony/carriers --projection _id,name,apn,type --where "numeric='${ACTIVE_PLMN:-45204}' AND type LIKE '%ims%'" 2>/dev/null || echo "")
+    APN_CHECK=$(content query --uri content://telephony/carriers --projection _id,name,apn,type --where "numeric='${ACTIVE_PLMN}' AND type LIKE '%ims%'" 2>/dev/null || echo "")
     if ! echo "$APN_CHECK" | grep -q "Row:"; then
-      ui_info "Injecting official Viettel IMS APN..."
-      local ACTIVE_PLMN
-      ACTIVE_PLMN=$(compat_getprop "gsm.sim.operator.numeric" "45204" | tr ',' '\n' | grep -E '^[0-9]{5,6}$' | head -n1)
-      [ -z "$ACTIVE_PLMN" ] && ACTIVE_PLMN="45204"
+      ui_info "Injecting IMS APN for PLMN ${ACTIVE_PLMN}..."
       local ACTIVE_MCC ACTIVE_MNC
       ACTIVE_MCC=$(printf "%s" "$ACTIVE_PLMN" | cut -c1-3)
       ACTIVE_MNC=$(printf "%s" "$ACTIVE_PLMN" | cut -c4-)
@@ -267,15 +267,17 @@ SNAPEOF
   fi
 
   local IMS_SVC="org.codeaurora.ims"
-  [ -f "$MODDIR/tools/carrierconfig-patcher.sh" ] && IMS_SVC=$(detect_vendor_ims_package 0)
-  ui_info "Binding IMS service (${IMS_SVC}) on slot 0..."
   if command -v cmd >/dev/null 2>&1; then
-    cmd phone ims set-ims-service -s 0 -c "$IMS_SVC" >/dev/null 2>&1 || true
-    cmd phone ims set-ims-service -s 0 -d "$IMS_SVC" >/dev/null 2>&1 || true
-    cmd phone ims enable -s 0 >/dev/null 2>&1 || true
+    for slot in 0 1; do
+      [ -f "$MODDIR/tools/carrierconfig-patcher.sh" ] && IMS_SVC=$(detect_vendor_ims_package "$slot")
+      ui_info "Binding IMS service (${IMS_SVC}) on slot ${slot}..."
+      cmd phone ims set-ims-service -s "$slot" -c "$IMS_SVC" >/dev/null 2>&1 || true
+      cmd phone ims set-ims-service -s "$slot" -d "$IMS_SVC" >/dev/null 2>&1 || true
+      cmd phone ims enable -s "$slot" >/dev/null 2>&1 || true
+    done
   fi
   sleep 4
-  ui_status "IMS SERVICE BIND" "Requested ImsResolver bind for org.codeaurora.ims (-c/-d)" "PASS"
+  ui_status "IMS SERVICE BIND" "Requested ImsResolver bind for ${IMS_SVC} (-c/-d)" "PASS"
 
   # Bước 10: Yêu cầu xác nhận riêng trước khi ngắt/nối radio qua airplane mode
   echo ""
@@ -291,9 +293,12 @@ SNAPEOF
       ui_info "Waiting 8 seconds for cellular re-negotiation..."
       sleep 8
       if command -v cmd >/dev/null 2>&1; then
-        cmd phone ims set-ims-service -s 0 -c org.codeaurora.ims >/dev/null 2>&1 || true
-        cmd phone ims set-ims-service -s 0 -d org.codeaurora.ims >/dev/null 2>&1 || true
-        cmd phone ims enable -s 0 >/dev/null 2>&1 || true
+        for slot in 0 1; do
+          [ -f "$MODDIR/tools/carrierconfig-patcher.sh" ] && IMS_SVC=$(detect_vendor_ims_package "$slot")
+          cmd phone ims set-ims-service -s "$slot" -c "$IMS_SVC" >/dev/null 2>&1 || true
+          cmd phone ims set-ims-service -s "$slot" -d "$IMS_SVC" >/dev/null 2>&1 || true
+          cmd phone ims enable -s "$slot" >/dev/null 2>&1 || true
+        done
       fi
       sleep 2
       ;;

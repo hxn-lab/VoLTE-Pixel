@@ -1,12 +1,12 @@
 #!/system/bin/sh
 # ============================================================
-# HXN VoEnabler VN v3.1.0 — Magisk / KernelSU / APatch Installer
+# HXN VoEnabler VN v3.2.9 — Magisk / KernelSU / APatch Installer
 # Target: All Qualcomm Google Pixels (< Pixel 6: Pixel 1 .. 5a 5G)
 # ============================================================
 SKIPUNZIP=0
 
 ui_print "=================================================="
-ui_print "  HXN VoEnabler VN v3.1.0 — Pixel (< 6) VoLTE"
+ui_print "  HXN VoEnabler VN v3.2.9 — Pixel (< 6) VoLTE"
 ui_print "  Target: Pixel 1..5a (Qualcomm) | VN Carriers"
 ui_print "  Stack : CarrierSettings + ICCID XML + ROW MBN"
 ui_print "=================================================="
@@ -50,6 +50,8 @@ set_perm "$MODPATH/tools/carrierconfig-patcher.sh" 0 0 0755
 [ -f "$MODPATH/probe.sh" ] && set_perm "$MODPATH/probe.sh" 0 0 0755
 
 mkdir -p /data/adb/imsforge
+CUR_PLMN=$(getprop gsm.sim.operator.numeric 2>/dev/null | tr -d "\r\n ")
+[ -n "$CUR_PLMN" ] && printf "%s\n" "$CUR_PLMN" > /data/adb/imsforge/last_plmn 2>/dev/null || true
 
 if [ -f "$MODPATH/tools/carrierconfig-patcher.sh" ]; then
     . "$MODPATH/tools/carrierconfig-patcher.sh"
@@ -61,11 +63,14 @@ if [ -f "$MODPATH/tools/carrierconfig-patcher.sh" ]; then
     fi
 
     # Magisk & APatch keep system/ prefix; KernelSU / KSU Next relocate vendor & product to module root
-    if [ "$KSU" = "true" ] && [ "$APATCH" != "true" ]; then
-        if [ ! -e /data/adb/metamodule ]; then
-            ui_print "! Lưu ý KSU: Chưa thấy /data/adb/metamodule (Meta-OverlayFS/NoMount/Mountify)."
-            ui_print "  Cài đặt mount metamodule để kích hoạt lớp gắn đè /product & /vendor."
+    if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ]; then
+        if auto_enable_metamodule; then
+            ui_print "- Đã tự động kích hoạt metamodule mount (/data/adb/metamodule)"
+        else
+            ui_print "- Chưa cài metamodule rời; sẽ dùng bind-mount tự động lúc khởi động."
         fi
+    fi
+    if [ "$KSU" = "true" ]; then
         MBN_OUT="$MODPATH"
     else
         MBN_OUT="$MODPATH/system"
@@ -78,7 +83,7 @@ if [ -f "$MODPATH/tools/carrierconfig-patcher.sh" ]; then
     fi
 fi
 
-if [ -f /product/etc/CarrierSettings/others.pb ] && carriers=$("$MODPATH/bin/imsforge" detect --save 2>&1 >/dev/null) && [ -n "$carriers" ]; then
+if [ -f /product/etc/CarrierSettings/others.pb ] && carriers=$("$MODPATH/bin/imsforge" detect --save 2>/dev/null) && [ -n "$carriers" ]; then
     ui_print "- Nhận diện SIM:"
     echo "$carriers" | while IFS= read -r line; do
         ui_print "    $line"

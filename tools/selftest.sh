@@ -34,7 +34,7 @@ run_self_test_suite() {
   # ============================================================
   local SYNTAX_ERR=0
   local F
-  for F in "$MODDIR"/install.sh "$MODDIR"/uninstall.sh "$MODDIR"/service.sh "$MODDIR"/customize.sh \
+  for F in "$MODDIR"/post-fs-data.sh "$MODDIR"/probe.sh "$MODDIR"/uninstall.sh "$MODDIR"/service.sh "$MODDIR"/customize.sh \
            "$MODDIR"/bin/hxn-volte "$MODDIR"/engine/*.sh "$MODDIR"/tools/*.sh; do
     if [ -f "$F" ]; then
       if ! sh -n "$F" 2>/dev/null; then
